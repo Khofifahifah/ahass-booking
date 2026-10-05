@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Package;
 use App\Services\SlotService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function store(Request $request, SlotService $slots): RedirectResponse
+    public function store(Request $request, SlotService $slots): JsonResponse
     {
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:120'],
@@ -36,11 +37,11 @@ class BookingController extends Controller
         ]);
 
         if (! in_array($data['jam'], $slots->timeSlots(), true)) {
-            return back()->withInput()->with('error', 'Slot jam tidak valid.');
-        }
-
-        if (! $slots->available($data['tanggal'], $data['jam'])) {
-            return back()->withInput()->with('error', 'Slot jam tersebut sudah penuh. Pilih jam lain.');
+            return response()->json([
+                'ok' => false,
+                'error' => 'jam_tidak_valid',
+                'message' => 'Slot jam tidak valid.',
+            ], 422);
         }
 
         $package = Package::query()
@@ -50,7 +51,11 @@ class BookingController extends Controller
             ->first();
 
         if (! $package) {
-            return back()->withInput()->with('error', 'Paket servis tidak ditemukan.');
+            return response()->json([
+                'ok' => false,
+                'error' => 'paket_tidak_ditemukan',
+                'message' => 'Paket servis tidak ditemukan.',
+            ], 422);
         }
 
         $partIds = $data['parts'] ?? [];
@@ -61,34 +66,98 @@ class BookingController extends Controller
         $items = collect([$package])->concat($parts);
         $total = $items->sum('harga');
 
-        $booking = DB::transaction(function () use ($data, $package, $items, $total, $slots) {
-            $booking = Booking::query()->create([
-                'kode' => $slots->generateKode(),
-                'nama_pelanggan' => $data['nama'],
-                'telepon' => $data['telepon'],
-                'no_polisi' => strtoupper(trim($data['no_polisi'])),
-                'tipe_motor' => $data['tipe_motor'],
-                'keluhan' => $data['keluhan'] ?? null,
-                'package_id' => $package->id,
-                'tanggal' => $data['tanggal'],
-                'jam' => $data['jam'],
-                'total' => $total,
-            ]);
+        if (! $slots->available($data['tanggal'], $data['jam'])) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'slot_penuh',
+                'message' => 'Slot jam tersebut sudah penuh. Maksimal 3 kendaraan per jam.',
+            ], 422);
+        }
 
-            foreach ($items as $item) {
-                $booking->items()->create([
-                    'package_id' => $item->id,
-                    'qty' => 1,
-                    'harga' => $item->harga,
-                ]);
+        $booking = DB::transaction(function () use ($data, $package, $items, $total, $slots) {
+            if (! $slots->available($data['tanggal'], $data['jam'])) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+                    'ok' => false,
+                    'error' => 'slot_penuh',
+                    'message' => 'Slot jam tersebut sudah penuh. Maksimal 3 kendaraan per jam.',
+                ], 422));
             }
 
-            return $booking;
-        });
+            $booking = Booking::query()->create([
+                    'kode' => $slots->generateKode(),
+                    'nama_pelanggan' => $data['nama'],
+                    'telepon' => $data['telepon'],
+                    'no_polisi' => strtoupper(trim($data['no_polisi'])),
+                    'tipe_motor' => $data['tipe_motor'],
+                    'keluhan' => $data['keluhan'] ?? null,
+                    'package_id' => $package->id,
+                    'tanggal' => $data['tanggal'],
+                    'jam' => $data['jam'],
+                    'total' => $total,
+                ]);
 
-        $request->session()->put('last_kode', $booking->kode);
+                foreach ($items as $item) {
+                    $booking->items()->create([
+                        'package_id' => $item->id,
+                        'qty' => 1,
+                        'harga' => $item->harga,
+                    ]);
+                }
 
-        return redirect()->route('booking.success');
+                return $booking;
+            });
+
+        $booking->load('package');
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Pendaftaran servis berhasil dikirim.',
+            'booking' => [
+                'kode' => $booking->kode,
+                'nama_pelanggan' => $booking->nama_pelanggan,
+                'no_polisi' => $booking->no_polisi,
+                'tipe_motor' => $booking->tipe_motor,
+                'tanggal' => $booking->tanggal->format('d/m/Y'),
+                'jam' => $booking->jam,
+                'paket' => $booking->package->nama,
+                'total' => format_rupiah($booking->total),
+            ],
+        ]);
+    }
+
+    public function list(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        $tanggal = (string) $request->query('tanggal', '');
+
+        $rows = Booking::query()
+            ->with('package')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('kode', 'like', "%{$q}%")
+                        ->orWhere('nama_pelanggan', 'like', "%{$q}%")
+                        ->orWhere('no_polisi', 'like', "%{$q}%");
+                });
+            })
+            ->when(preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal), fn ($query) => $query->whereDate('tanggal', $tanggal))
+            ->orderByDesc('tanggal')
+            ->orderBy('jam')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get()
+            ->map(fn (Booking $row) => [
+                'kode' => $row->kode,
+                'nama_pelanggan' => $row->nama_pelanggan,
+                'no_polisi' => $row->no_polisi,
+                'tipe_motor' => $row->tipe_motor,
+                'tanggal' => $row->tanggal->format('d/m/Y'),
+                'jam' => $row->jam,
+                'paket' => $row->package->nama,
+                'status' => $row->status,
+                'status_label' => status_label($row->status),
+            ]);
+
+        return response()->json(['data' => $rows]);
     }
 
     public function success(Request $request): View|RedirectResponse

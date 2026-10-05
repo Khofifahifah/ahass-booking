@@ -26,11 +26,10 @@ php artisan serve
 
 Pengaturan database ada di `.env` (default database `ahass_laravel`, user `root`, password kosong).
 
-Versi PHP native lama tetap ada di folder `ahass-booking` jika masih dibutuhkan.
-
 ## Fitur
 
 - Form booking: data pelanggan, tanggal, slot jam, paket servis, part tambahan
-- Kapasitas 4 motor per jam (08.00–16.00, istirahat 12.00)
+- Submit form dan load slot memakai jQuery/AJAX tanpa reload halaman
+- Kapasitas 3 motor per jam (08.00–16.00, istirahat 12.00); slot penuh mengirim error JSON
 - Cek status booking dengan kode + nomor HP
-- Panel admin: dashboard, daftar pendaftaran, ubah status, slot harian, kelola paket/part
+- Panel admin: dashboard, daftar pendaftaran (filter AJAX), ubah status, slot harian, kelola paket/part

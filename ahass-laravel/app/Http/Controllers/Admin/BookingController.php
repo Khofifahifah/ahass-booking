@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\SlotService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BookingController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $status = (string) $request->query('status', '');
         $q = trim((string) $request->query('q', ''));
@@ -30,6 +31,23 @@ class BookingController extends Controller
             ->orderBy('jam')
             ->orderByDesc('id')
             ->get();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $rows->map(fn (Booking $row) => [
+                    'kode' => $row->kode,
+                    'url' => route('admin.bookings.show', $row),
+                    'nama_pelanggan' => $row->nama_pelanggan,
+                    'telepon' => $row->telepon,
+                    'no_polisi' => $row->no_polisi,
+                    'jadwal' => $row->tanggal->format('d/m/Y').' '.$row->jam,
+                    'paket' => $row->package->nama,
+                    'total' => format_rupiah($row->total),
+                    'status' => $row->status,
+                    'status_label' => status_label($row->status),
+                ]),
+            ]);
+        }
 
         return view('admin.bookings.index', compact('rows', 'status', 'q'));
     }

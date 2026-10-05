@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::get('/api/bookings', [BookingController::class, 'list'])->name('bookings.list');
 Route::get('/booking/sukses', [BookingController::class, 'success'])->name('booking.success');
 Route::get('/cek', [StatusController::class, 'form'])->name('status.form');
 Route::post('/cek', [StatusController::class, 'show'])->name('status.show');

@@ -7,7 +7,7 @@ return [
     'slot_start' => (int) env('SLOT_START', 8),
     'slot_end' => (int) env('SLOT_END', 16),
     'slot_lunch' => (int) env('SLOT_LUNCH', 12),
-    'slot_capacity' => (int) env('SLOT_CAPACITY', 4),
+    'slot_capacity' => (int) env('SLOT_CAPACITY', 3),
     'motor_types' => [
         'Beat', 'Vario 125', 'Vario 160', 'Scoopy', 'Genio', 'PCX', 'ADV',
         'Stylo', 'CBR 150R', 'CB150R', 'Sonic 150R', 'Revo', 'Supra X', 'Lainnya',
