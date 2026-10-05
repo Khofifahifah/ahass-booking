@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 define('APP_NAME', 'AHASS Booking');
 define('WORKSHOP_NAME', 'AHASS Honda Sentosa');
-define('WORKSHOP_ADDRESS', 'Jl. Raya Servis No. 88, Jakarta');
+define('WORKSHOP_ADDRESS', 'Jl. Wolter Monginsidi No.93, South Lolu, Palu Timur, Central Sulawesi');
 define('WORKSHOP_PHONE', '021-555-0188');
 
 define('DB_HOST', 'localhost');

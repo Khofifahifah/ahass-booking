@@ -24,7 +24,7 @@ function render_header(string $title, string $active = ''): void
             <span class="brand-mark">H</span>
             <span>
                 <strong>AHASS</strong>
-                <small>Booking Servis Honda</small>
+                <small>Booking Servis Honda Anugrah Perdana</small>
             </span>
         </a>
         <nav>

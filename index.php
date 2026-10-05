@@ -15,7 +15,7 @@ render_header('Beranda', 'home');
 <section class="hero">
     <div class="container">
         <p class="muted" style="color:#ffd2ce;margin:0 0 8px">Bengkel resmi Honda</p>
-        <h1>Booking servis motor Honda tanpa antre di bengkel.</h1>
+        <h1>Booking servis motor Honda tanpa antrian di bengkel.</h1>
         <p>Pilih tanggal, cek slot jam yang masih kosong, lalu tentukan paket servis dan part original AHM.</p>
         <div class="hero-actions">
             <a class="btn" href="<?= e(BASE_URL) ?>/booking.php">Daftar servis sekarang</a>

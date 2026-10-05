@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'workshop_name' => env('WORKSHOP_NAME', 'AHASS Honda Sentosa'),
-    'workshop_address' => env('WORKSHOP_ADDRESS', 'Jl. Raya Servis No. 88, Jakarta'),
+    'workshop_name' => env('WORKSHOP_NAME', 'AHASS Honda Anugrah Perdana'),
+    'workshop_address' => env('WORKSHOP_ADDRESS', 'Jl. Wolter Monginsidi No.93, South Lolu, Palu Timur, Central Sulawesi'),
     'workshop_phone' => env('WORKSHOP_PHONE', '021-555-0188'),
     'slot_start' => (int) env('SLOT_START', 8),
     'slot_end' => (int) env('SLOT_END', 16),
